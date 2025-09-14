@@ -1,7 +1,6 @@
 #ifndef PERGUNTA_HPP
 #define PERGUNTA_HPP
 
-#include <iostream>
 #include <string>
 using namespace std;
 
@@ -13,32 +12,21 @@ struct Pergunta {
     string categoria;
     int pontos;
     int dificuldade; // 1=fácil, 2=médio, 3=difícil
-    int numAlternativas;
     
-    // Construtor
-    Pergunta();
-    Pergunta(string e, string alt[], int resp, string cat, int pts, int dif);
+    // Construtor padrão
+    Pergunta() : enunciado(""), respostaCorreta(0), categoria(""), pontos(0), dificuldade(1) {
+        for(int i = 0; i < 4; i++) {
+            alternativas[i] = "";
+        }
+    }
     
-    // Métodos para gerenciar alternativas
-    void adicionarAlternativa(string alt);
-    string obterAlternativa(int indice) const;
-    int numeroAlternativas() const;
-};
-
-// Classe para gerenciar o banco de perguntas
-class BancoPerguntas {
-private:
-    static const int MAX_PERGUNTAS = 20;
-    Pergunta perguntas[MAX_PERGUNTAS];
-    int totalPerguntas;
-    
-public:
-    BancoPerguntas();
-    void inicializarPerguntas();
-    void embaralharPerguntas();
-    Pergunta obterPergunta(int indice) const;
-    int numeroPerguntas() const;
-    void obterPerguntasAleatorias(Pergunta* resultado, int quantidade);
+    // Construtor com parâmetros
+    Pergunta(string e, string alt[4], int resp, string cat, int pts, int dif) 
+        : enunciado(e), respostaCorreta(resp), categoria(cat), pontos(pts), dificuldade(dif) {
+        for(int i = 0; i < 4; i++) {
+            alternativas[i] = alt[i];
+        }
+    }
 };
 
 #endif

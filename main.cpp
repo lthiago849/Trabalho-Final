@@ -1,12 +1,5 @@
 #include <iostream>
 #include <string>
-#include <vector>
-#include <queue>
-#include <stack>
-#include <algorithm>
-#include <ctime>
-#include <cstdlib>
-#include <iomanip>
 #include "Arvore.hpp"
 
 using namespace std;
@@ -14,273 +7,161 @@ using namespace std;
 // Estrutura da Pergunta
 struct Pergunta {
     string enunciado;
-    vector<string> alternativas;
+    string alternativas[4]; // Array fixo de 4 alternativas
     int respostaCorreta;
     string categoria;
     int pontos;
     int dificuldade; // 1=fácil, 2=médio, 3=difícil
+    
+    // Construtor padrão
+    Pergunta() : enunciado(""), respostaCorreta(0), categoria(""), pontos(0), dificuldade(1) {
+        for(int i = 0; i < 4; i++) {
+            alternativas[i] = "";
+        }
+    }
+    
+    // Construtor com parâmetros
+    Pergunta(string e, string alt[4], int resp, string cat, int pts, int dif) 
+        : enunciado(e), respostaCorreta(resp), categoria(cat), pontos(pts), dificuldade(dif) {
+        for(int i = 0; i < 4; i++) {
+            alternativas[i] = alt[i];
+        }
+    }
+};
+
+// Implementação simplificada de uma fila usando array
+class FilaPerguntas {
+private:
+    static const int MAX_SIZE = 20;
+    Pergunta dados[MAX_SIZE];
+    int frente;
+    int tras;
+    int tamanho;
+    
+public:
+    FilaPerguntas() : frente(0), tras(0), tamanho(0) {}
+    
+    bool vazia() { return tamanho == 0; }
+    bool cheia() { return tamanho == MAX_SIZE; }
+    
+    void enfileirar(Pergunta p) {
+        if(!cheia()) {
+            dados[tras] = p;
+            tras = (tras + 1) % MAX_SIZE;
+            tamanho++;
+        }
+    }
+    
+    Pergunta desenfileirar() {
+        if(!vazia()) {
+            Pergunta p = dados[frente];
+            frente = (frente + 1) % MAX_SIZE;
+            tamanho--;
+            return p;
+        }
+        return Pergunta(); // retorna pergunta vazia se fila vazia
+    }
+    
+    int getTamanho() { return tamanho; }
+};
+
+// Implementação simplificada de uma pilha usando array
+class PilhaHistorico {
+private:
+    static const int MAX_SIZE = 20;
+    Pergunta dados[MAX_SIZE];
+    int topo;
+    
+public:
+    PilhaHistorico() : topo(-1) {}
+    
+    bool vazia() { return topo == -1; }
+    bool cheia() { return topo == MAX_SIZE - 1; }
+    
+    void empilhar(Pergunta p) {
+        if(!cheia()) {
+            dados[++topo] = p;
+        }
+    }
+    
+    Pergunta desempilhar() {
+        if(!vazia()) {
+            return dados[topo--];
+        }
+        return Pergunta(); // retorna pergunta vazia se pilha vazia
+    }
+    
+    int getTamanho() { return topo + 1; }
 };
 
 // Classe principal do Quiz
 class QuizEstruturaDados {
 private:
-    vector<Pergunta> bancoPerguntas;
+    static const int MAX_PERGUNTAS = 15;
+    Pergunta bancoPerguntas[MAX_PERGUNTAS];
+    int totalPerguntas;
     ArvoreBST* arvoreRanking;
-    stack<Pergunta> historicoPerguntas; // pilha para histórico
+    PilhaHistorico historicoPerguntas;
     
-    void inicializarPerguntas();
-    void embaralharPerguntas(vector<Pergunta>& perguntas);
-    
-public:
-    QuizEstruturaDados();
-    ~QuizEstruturaDados();
-    
-    void exibirMenu();
-    void jogarQuiz();
-    void exibirRanking();
-    void demonstrarOrdenacao(vector<Jogador>& jogadores);
-    void sobreOJogo();
-    void executar();
-};
-
-// Construtor
-QuizEstruturaDados::QuizEstruturaDados() {
-    arvoreRanking = new ArvoreBST();
-    inicializarPerguntas();
-    srand(time(0)); // semente para números aleatórios
-}
-
-// Destrutor
-QuizEstruturaDados::~QuizEstruturaDados() {
-    delete arvoreRanking;
-}
-
-// Inicializar banco de perguntas
-void QuizEstruturaDados::inicializarPerguntas() {
-    bancoPerguntas.clear();
-    
-    // Perguntas sobre Listas
-    bancoPerguntas.push_back({
-        "Qual a principal vantagem das listas ligadas sobre arrays?",
-        {"Acesso mais rapido aos elementos", "Tamanho dinamico", "Menor uso de memoria", "Ordenacao automatica"},
-        1, "Listas", 10, 1
-    });
-    
-    bancoPerguntas.push_back({
-        "Em uma lista duplamente ligada, cada no possui:",
-        {"Apenas ponteiro para o proximo", "Ponteiros para anterior e proximo", "Apenas dados", "Array de ponteiros"},
-        1, "Listas", 15, 2
-    });
-    
-    // Perguntas sobre Pilhas
-    bancoPerguntas.push_back({
-        "Em uma pilha, qual elemento e removido primeiro?",
-        {"O primeiro inserido (FIFO)", "O ultimo inserido (LIFO)", "O do meio", "Qualquer um"},
-        1, "Pilhas", 10, 1
-    });
-    
-    bancoPerguntas.push_back({
-        "Qual operacao NAO e tipica de uma pilha?",
-        {"Push (empilhar)", "Pop (desempilhar)", "Top (topo)", "Search (buscar no meio)"},
-        3, "Pilhas", 15, 2
-    });
-    
-    // Perguntas sobre Filas
-    bancoPerguntas.push_back({
-        "O principio de funcionamento de uma fila e:",
-        {"LIFO (Last In, First Out)", "FIFO (First In, First Out)", "Random Access", "FILO (First In, Last Out)"},
-        1, "Filas", 10, 1
-    });
-    
-    bancoPerguntas.push_back({
-        "Em uma fila circular, quando ela esta cheia:",
-        {"Rear aponta para Front", "(Rear + 1) % size == Front", "Rear > Front", "Front == 0"},
-        1, "Filas", 20, 3
-    });
-    
-    // Perguntas sobre Árvores
-    bancoPerguntas.push_back({
-        "Qual a complexidade de busca em uma arvore binaria balanceada?",
-        {"O(n)", "O(log n)", "O(n^2)", "O(1)"},
-        1, "Arvores", 15, 2
-    });
-    
-    bancoPerguntas.push_back({
-        "No percurso in-ordem de uma BST, os elementos sao visitados:",
-        {"Em ordem crescente", "Em ordem decrescente", "Aleatoriamente", "Por nivel"},
-        0, "Arvores", 20, 3
-    });
-    
-    bancoPerguntas.push_back({
-        "Uma arvore binaria completa com altura h tem quantos nos?",
-        {"2^h", "2^h - 1", "2^(h+1) - 1", "h^2"},
-        2, "Arvores", 25, 3
-    });
-    
-    // Perguntas sobre Algoritmos
-    bancoPerguntas.push_back({
-        "Qual algoritmo de ordenacao tem complexidade O(n log n) no melhor caso?",
-        {"Bubble Sort", "Selection Sort", "Merge Sort", "Insertion Sort"},
-        2, "Algoritmos", 15, 2
-    });
-    
-    bancoPerguntas.push_back({
-        "O Quick Sort tem complexidade de pior caso:",
-        {"O(n log n)", "O(n^2)", "O(log n)", "O(n)"},
-        1, "Algoritmos", 20, 3
-    });
-    
-    bancoPerguntas.push_back({
-        "Qual estrutura de dados e mais eficiente para implementar uma fila de prioridades?",
-        {"Array", "Lista ligada", "Heap", "Stack"},
-        2, "Algoritmos", 25, 3
-    });
-    
-    cout << "Banco de perguntas inicializado com " << bancoPerguntas.size() << " perguntas!" << endl;
-}
-
-// Embaralhar perguntas
-void QuizEstruturaDados::embaralharPerguntas(vector<Pergunta>& perguntas) {
-    random_shuffle(perguntas.begin(), perguntas.end());
-}
-
-// Exibir menu principal
-void QuizEstruturaDados::exibirMenu() {
-    cout << "\n╔══════════════════════════════════════╗" << endl;
-    cout << "║     QUIZ - ESTRUTURAS DE DADOS       ║" << endl;
-    cout << "║          UFPA - 2024                 ║" << endl;
-    cout << "╠══════════════════════════════════════╣" << endl;
-    cout << "║  1. 🎮 Jogar Quiz                    ║" << endl;
-    cout << "║  2. 🏆 Ver Ranking                   ║" << endl;
-    cout << "║  3. 🌳 Visualizar Arvore             ║" << endl;
-    cout << "║  4. ℹ️  Sobre o Jogo                  ║" << endl;
-    cout << "║  5. 🚪 Sair                          ║" << endl;
-    cout << "╚══════════════════════════════════════╝" << endl;
-    cout << "Escolha uma opcao (1-5): ";
-}
-
-// Função principal para jogar
-void QuizEstruturaDados::jogarQuiz() {
-    cout << "\n=== INICIANDO QUIZ ===" << endl;
-    
-    string nomeJogador;
-    cout << "Digite seu nome: ";
-    cin.ignore();
-    getline(cin, nomeJogador);
-    
-    // Selecionar perguntas aleatórias
-    vector<Pergunta> perguntasJogo = bancoPerguntas;
-    embaralharPerguntas(perguntasJogo);
-    
-    // Limitar a 8 perguntas para não ficar muito longo
-    if (perguntasJogo.size() > 8) {
-        perguntasJogo.resize(8);
+    void inicializarPerguntas() {
+        totalPerguntas = 0;
+        
+        // Pergunta 1
+        string alt1[] = {"Acesso mais rapido aos elementos", "Tamanho dinamico", "Menor uso de memoria", "Ordenacao automatica"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Qual a principal vantagem das listas ligadas sobre arrays?", alt1, 1, "Listas", 10, 1);
+        
+        // Pergunta 2
+        string alt2[] = {"Apenas ponteiro para o proximo", "Ponteiros para anterior e proximo", "Apenas dados", "Array de ponteiros"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Em uma lista duplamente ligada, cada no possui:", alt2, 1, "Listas", 15, 2);
+        
+        // Pergunta 3
+        string alt3[] = {"O primeiro inserido (FIFO)", "O ultimo inserido (LIFO)", "O do meio", "Qualquer um"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Em uma pilha, qual elemento e removido primeiro?", alt3, 1, "Pilhas", 10, 1);
+        
+        // Pergunta 4
+        string alt4[] = {"Push (empilhar)", "Pop (desempilhar)", "Top (topo)", "Search (buscar no meio)"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Qual operacao NAO e tipica de uma pilha?", alt4, 3, "Pilhas", 15, 2);
+        
+        // Pergunta 5
+        string alt5[] = {"LIFO (Last In, First Out)", "FIFO (First In, First Out)", "Random Access", "FILO (First In, Last Out)"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("O principio de funcionamento de uma fila e:", alt5, 1, "Filas", 10, 1);
+        
+        // Pergunta 6
+        string alt6[] = {"Rear aponta para Front", "(Rear + 1) % size == Front", "Rear > Front", "Front == 0"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Em uma fila circular, quando ela esta cheia:", alt6, 1, "Filas", 20, 3);
+        
+        // Pergunta 7
+        string alt7[] = {"O(n)", "O(log n)", "O(n^2)", "O(1)"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Qual a complexidade de busca em uma arvore binaria balanceada?", alt7, 1, "Arvores", 15, 2);
+        
+        // Pergunta 8
+        string alt8[] = {"Em ordem crescente", "Em ordem decrescente", "Aleatoriamente", "Por nivel"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("No percurso in-ordem de uma BST, os elementos sao visitados:", alt8, 0, "Arvores", 20, 3);
+        
+        // Pergunta 9
+        string alt9[] = {"2^h", "2^h - 1", "2^(h+1) - 1", "h^2"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Uma arvore binaria completa com altura h tem quantos nos?", alt9, 2, "Arvores", 25, 3);
+        
+        // Pergunta 10
+        string alt10[] = {"Bubble Sort", "Selection Sort", "Merge Sort", "Insertion Sort"};
+        bancoPerguntas[totalPerguntas++] = Pergunta("Qual algoritmo de ordenacao tem complexidade O(n log n) no melhor caso?", alt10, 2, "Algoritmos", 15, 2);
+        
+        cout << "Banco de perguntas inicializado com " << totalPerguntas << " perguntas!" << endl;
     }
     
-    // Usar fila para sequência de perguntas
-    queue<Pergunta> filaPerguntas;
-    for (const auto& p : perguntasJogo) {
-        filaPerguntas.push(p);
-    }
-    
-    Jogador jogador(nomeJogador, 0);
-    int numeroPergunta = 1;
-    int acertos = 0;
-    
-    cout << "\n🎯 Voce tera " << filaPerguntas.size() << " perguntas para responder!" << endl;
-    cout << "Pressione ENTER para comecar...";
-    cin.get();
-    
-    while (!filaPerguntas.empty()) {
-        system("clear || cls"); // Limpar tela (funciona no Linux/Mac e Windows)
-        
-        Pergunta perguntaAtual = filaPerguntas.front();
-        filaPerguntas.pop();
-        historicoPerguntas.push(perguntaAtual); // Adicionar ao histórico
-        
-        cout << "\n" << string(50, '=') << endl;
-        cout << "PERGUNTA " << numeroPergunta << "/" << perguntasJogo.size() << endl;
-        cout << "Categoria: " << perguntaAtual.categoria << " | ";
-        cout << "Dificuldade: " << string(perguntaAtual.dificuldade, '⭐') << endl;
-        cout << "Pontos: " << perguntaAtual.pontos << endl;
-        cout << string(50, '=') << endl;
-        
-        cout << "\n📝 " << perguntaAtual.enunciado << endl << endl;
-        
-        for (int i = 0; i < perguntaAtual.alternativas.size(); i++) {
-            cout << "  " << (char)('A' + i) << ") " << perguntaAtual.alternativas[i] << endl;
-        }
-        
-        cout << "\nSua resposta (A/B/C/D): ";
-        char resposta;
-        cin >> resposta;
-        resposta = toupper(resposta);
-        int indiceResposta = resposta - 'A';
-        
-        cout << "\n" << string(30, '-') << endl;
-        
-        if (indiceResposta == perguntaAtual.respostaCorreta) {
-            cout << "✅ CORRETO! +" << perguntaAtual.pontos << " pontos" << endl;
-            jogador.pontuacao += perguntaAtual.pontos;
-            acertos++;
-        } else {
-            cout << "❌ ERRADO! A resposta correta era: " 
-                 << (char)('A' + perguntaAtual.respostaCorreta) << ") "
-                 << perguntaAtual.alternativas[perguntaAtual.respostaCorreta] << endl;
-        }
-        
-        cout << "Pontuacao atual: " << jogador.pontuacao << " pontos" << endl;
-        
-        numeroPergunta++;
-        
-        if (!filaPerguntas.empty()) {
-            cout << "\nPressione ENTER para a proxima pergunta...";
-            cin.ignore();
-            cin.get();
+    // Algoritmo simples de embaralhamento (Fisher-Yates simplificado)
+    void embaralharPerguntas() {
+        for(int i = 0; i < totalPerguntas; i++) {
+            int j = i + (rand() % (totalPerguntas - i));
+            // Trocar perguntas[i] com perguntas[j]
+            Pergunta temp = bancoPerguntas[i];
+            bancoPerguntas[i] = bancoPerguntas[j];
+            bancoPerguntas[j] = temp;
         }
     }
     
-    // Resultados finais
-    cout << "\n" << string(60, '=') << endl;
-    cout << "🎊 QUIZ FINALIZADO! 🎊" << endl;
-    cout << string(60, '=') << endl;
-    cout << "Jogador: " << jogador.nome << endl;
-    cout << "Acertos: " << acertos << "/" << perguntasJogo.size() << endl;
-    cout << "Pontuacao Final: " << jogador.pontuacao << " pontos" << endl;
-    
-    double percentual = (double)acertos / perguntasJogo.size() * 100;
-    cout << "Aproveitamento: " << fixed << setprecision(1) << percentual << "%" << endl;
-    
-    // Classificação
-    if (percentual >= 80) cout << "🏆 Excelente!" << endl;
-    else if (percentual >= 60) cout << "👍 Bom trabalho!" << endl;
-    else if (percentual >= 40) cout << "📚 Continue estudando!" << endl;
-    else cout << "💪 Nao desista, pratique mais!" << endl;
-    
-    // Inserir na árvore de ranking
-    cout << "\n🌳 Inserindo no ranking..." << endl;
-    arvoreRanking->inserir(jogador);
-    
-    cout << "\nPressione ENTER para voltar ao menu...";
-    cin.ignore();
-    cin.get();
-}
-
-// Demonstrar algoritmo de ordenação
-void QuizEstruturaDados::demonstrarOrdenacao(vector<Jogador>& jogadores) {
-    if (jogadores.size() <= 1) return;
-    
-    cout << "\n🔄 DEMONSTRACAO DO MERGE SORT - ORDENACAO DO RANKING" << endl;
-    cout << string(60, '-') << endl;
-    
-    cout << "Estado inicial:" << endl;
-    for (int i = 0; i < jogadores.size(); i++) {
-        cout << jogadores[i].nome << "(" << jogadores[i].pontuacao << ") ";
-    }
-    cout << endl << endl;
-    
-    // Implementação simplificada do Merge Sort com visualização
-    function<void(vector<Jogador>&, int, int)> mergeSort = [&](vector<Jogador>& arr, int inicio, int fim) {
+    // Implementação do Merge Sort para demonstração
+    void mergeSort(Jogador arr[], int inicio, int fim) {
         if (inicio < fim) {
             int meio = inicio + (fim - inicio) / 2;
             
@@ -289,149 +170,320 @@ void QuizEstruturaDados::demonstrarOrdenacao(vector<Jogador>& jogadores) {
             mergeSort(arr, inicio, meio);
             mergeSort(arr, meio + 1, fim);
             
-            // Merge
-            vector<Jogador> temp(fim - inicio + 1);
-            int i = inicio, j = meio + 1, k = 0;
-            
-            while (i <= meio && j <= fim) {
-                if (arr[i].pontuacao >= arr[j].pontuacao) {
-                    temp[k++] = arr[i++];
-                } else {
-                    temp[k++] = arr[j++];
-                }
-            }
-            
-            while (i <= meio) temp[k++] = arr[i++];
-            while (j <= fim) temp[k++] = arr[j++];
-            
-            for (i = inicio, k = 0; i <= fim; i++, k++) {
-                arr[i] = temp[k];
-            }
-            
-            cout << "Merged [" << inicio << ".." << fim << "]: ";
-            for (int x = inicio; x <= fim; x++) {
-                cout << arr[x].nome << "(" << arr[x].pontuacao << ") ";
-            }
-            cout << endl;
+            merge(arr, inicio, meio, fim);
         }
-    };
-    
-    mergeSort(jogadores, 0, jogadores.size() - 1);
-    
-    cout << "\n✅ Ordenacao concluida!" << endl;
-    cout << "Estado final (ordem decrescente de pontuacao):" << endl;
-    for (const auto& j : jogadores) {
-        cout << j.nome << "(" << j.pontuacao << ") ";
-    }
-    cout << endl;
-}
-
-// Exibir ranking
-void QuizEstruturaDados::exibirRanking() {
-    cout << "\n🏆 RANKING DOS JOGADORES 🏆" << endl;
-    
-    if (arvoreRanking->vazia()) {
-        cout << "Nenhum jogador no ranking ainda. Jogue para aparecer aqui!" << endl;
-        return;
     }
     
-    // Obter ranking da árvore
-    vector<Jogador> ranking = arvoreRanking->obterRankingDecrescente();
-    
-    // Demonstrar algoritmo de ordenação
-    cout << "\nDeseja ver a demonstracao do algoritmo de ordenacao? (s/n): ";
-    char opcao;
-    cin >> opcao;
-    if (tolower(opcao) == 's') {
-        vector<Jogador> copia = ranking;
-        // Embaralhar para mostrar a ordenação
-        random_shuffle(copia.begin(), copia.end());
-        demonstrarOrdenacao(copia);
-    }
-    
-    cout << "\n" << string(50, '=') << endl;
-    cout << "RANKING FINAL" << endl;
-    cout << string(50, '=') << endl;
-    
-    for (int i = 0; i < ranking.size(); i++) {
-        string medalha = "";
-        if (i == 0) medalha = "🥇";
-        else if (i == 1) medalha = "🥈";
-        else if (i == 2) medalha = "🥉";
-        else medalha = "  ";
+    void merge(Jogador arr[], int inicio, int meio, int fim) {
+        int n1 = meio - inicio + 1;
+        int n2 = fim - meio;
         
-        cout << medalha << " " << setw(2) << (i + 1) << "º lugar: " 
-             << setw(15) << left << ranking[i].nome 
-             << setw(4) << right << ranking[i].pontuacao << " pontos" << endl;
+        // Arrays temporários
+        Jogador* esquerda = new Jogador[n1];
+        Jogador* direita = new Jogador[n2];
+        
+        // Copiar dados para arrays temporários
+        for(int i = 0; i < n1; i++)
+            esquerda[i] = arr[inicio + i];
+        for(int j = 0; j < n2; j++)
+            direita[j] = arr[meio + 1 + j];
+        
+        // Merge dos arrays temporários
+        int i = 0, j = 0, k = inicio;
+        
+        while(i < n1 && j < n2) {
+            if(esquerda[i].pontuacao >= direita[j].pontuacao) {
+                arr[k] = esquerda[i];
+                i++;
+            } else {
+                arr[k] = direita[j];
+                j++;
+            }
+            k++;
+        }
+        
+        // Copiar elementos restantes
+        while(i < n1) {
+            arr[k] = esquerda[i];
+            i++;
+            k++;
+        }
+        
+        while(j < n2) {
+            arr[k] = direita[j];
+            j++;
+            k++;
+        }
+        
+        cout << "Merged [" << inicio << ".." << fim << "]: ";
+        for(int x = inicio; x <= fim; x++) {
+            cout << arr[x].nome << "(" << arr[x].pontuacao << ") ";
+        }
+        cout << endl;
+        
+        delete[] esquerda;
+        delete[] direita;
     }
     
-    arvoreRanking->exibirEstatisticas();
-}
-
-// Sobre o jogo
-void QuizEstruturaDados::sobreOJogo() {
-    cout << "\n📖 SOBRE O QUIZ - ESTRUTURAS DE DADOS" << endl;
-    cout << string(50, '=') << endl;
-    cout << "🎯 Objetivo: Aprender e testar conhecimentos sobre estruturas de dados" << endl;
-    cout << "🏫 Disciplina: Estruturas de Dados I - UFPA" << endl;
-    cout << "👥 Desenvolvedores: [Seus nomes aqui]" << endl;
-    cout << "\n📚 ESTRUTURAS DE DADOS UTILIZADAS:" << endl;
-    cout << "• Árvore BST: Armazenamento do ranking de jogadores" << endl;
-    cout << "• Fila (Queue): Sequência de perguntas do quiz" << endl;
-    cout << "• Pilha (Stack): Histórico de perguntas respondidas" << endl;
-    cout << "• Vetor (Vector): Banco de perguntas e alternativas" << endl;
-    cout << "\n🔧 ALGORITMOS IMPLEMENTADOS:" << endl;
-    cout << "• Merge Sort: Ordenação do ranking (complexidade O(n log n))" << endl;
-    cout << "• Busca em BST: Organização eficiente dos jogadores" << endl;
-    cout << "• Embaralhamento: Randomização das perguntas" << endl;
-    cout << "\n🎮 FUNCIONALIDADES:" << endl;
-    cout << "• Quiz interativo com perguntas de múltipla escolha" << endl;
-    cout << "• Sistema de pontuação baseado na dificuldade" << endl;
-    cout << "• Ranking persistente usando árvore binária" << endl;
-    cout << "• Visualização do processo de ordenação" << endl;
-    cout << "• Interface amigável no terminal" << endl;
-}
-
-// Executar o programa principal
-void QuizEstruturaDados::executar() {
-    int opcao;
+public:
+    QuizEstruturaDados() {
+        arvoreRanking = new ArvoreBST();
+        inicializarPerguntas();
+    }
     
-    cout << "🚀 Inicializando Quiz de Estruturas de Dados..." << endl;
+    ~QuizEstruturaDados() {
+        delete arvoreRanking;
+    }
     
-    do {
-        exibirMenu();
+    void exibirMenu() {
+        cout << "\n=======================================" << endl;
+        cout << "     QUIZ - ESTRUTURAS DE DADOS       " << endl;
+        cout << "          UFPA - 2024                 " << endl;
+        cout << "=======================================" << endl;
+        cout << "  1. Jogar Quiz                    " << endl;
+        cout << "  2. Ver Ranking                   " << endl;
+        cout << "  3. Visualizar Arvore             " << endl;
+        cout << "  4. Sobre o Jogo                  " << endl;
+        cout << "  5. Sair                          " << endl;
+        cout << "=======================================" << endl;
+        cout << "Escolha uma opcao (1-5): ";
+    }
+    
+    void jogarQuiz() {
+        cout << "\n=== INICIANDO QUIZ ===" << endl;
+        
+        string nomeJogador;
+        cout << "Digite seu nome: ";
+        cin.ignore();
+        getline(cin, nomeJogador);
+        
+        // Embaralhar perguntas
+        embaralharPerguntas();
+        
+        // Usar fila para sequência de perguntas (máximo 8 perguntas)
+        FilaPerguntas filaPerguntas;
+        int numPerguntasJogo = (totalPerguntas > 8) ? 8 : totalPerguntas;
+        
+        for(int i = 0; i < numPerguntasJogo; i++) {
+            filaPerguntas.enfileirar(bancoPerguntas[i]);
+        }
+        
+        Jogador jogador(nomeJogador, 0);
+        int numeroPergunta = 1;
+        int acertos = 0;
+        
+        cout << "\nVoce tera " << filaPerguntas.getTamanho() << " perguntas para responder!" << endl;
+        cout << "Pressione ENTER para comecar...";
+        cin.get();
+        
+        while(!filaPerguntas.vazia()) {
+            Pergunta perguntaAtual = filaPerguntas.desenfileirar();
+            historicoPerguntas.empilhar(perguntaAtual); // Adicionar ao histórico
+            
+            cout << "\n" << string(50, '=') << endl;
+            cout << "PERGUNTA " << numeroPergunta << "/" << numPerguntasJogo << endl;
+            cout << "Categoria: " << perguntaAtual.categoria << " | ";
+            cout << "Dificuldade: " << string(perguntaAtual.dificuldade, '*') << endl;
+            cout << "Pontos: " << perguntaAtual.pontos << endl;
+            cout << string(50, '=') << endl;
+            
+            cout << "\n" << perguntaAtual.enunciado << endl << endl;
+            
+            for(int i = 0; i < 4; i++) {
+                cout << "  " << (char)('A' + i) << ") " << perguntaAtual.alternativas[i] << endl;
+            }
+            
+            cout << "\nSua resposta (A/B/C/D): ";
+            char resposta;
+            cin >> resposta;
+            resposta = (resposta >= 'a' && resposta <= 'z') ? resposta - 32 : resposta; // converter para maiúscula
+            int indiceResposta = resposta - 'A';
+            
+            cout << "\n" << string(30, '-') << endl;
+            
+            if(indiceResposta == perguntaAtual.respostaCorreta) {
+                cout << "CORRETO! +" << perguntaAtual.pontos << " pontos" << endl;
+                jogador.pontuacao += perguntaAtual.pontos;
+                acertos++;
+            } else {
+                cout << "ERRADO! A resposta correta era: " 
+                     << (char)('A' + perguntaAtual.respostaCorreta) << ") "
+                     << perguntaAtual.alternativas[perguntaAtual.respostaCorreta] << endl;
+            }
+            
+            cout << "Pontuacao atual: " << jogador.pontuacao << " pontos" << endl;
+            
+            numeroPergunta++;
+            
+            if(!filaPerguntas.vazia()) {
+                cout << "\nPressione ENTER para a proxima pergunta...";
+                cin.ignore();
+                cin.get();
+            }
+        }
+        
+        // Resultados finais
+        cout << "\n" << string(60, '=') << endl;
+        cout << "QUIZ FINALIZADO!" << endl;
+        cout << string(60, '=') << endl;
+        cout << "Jogador: " << jogador.nome << endl;
+        cout << "Acertos: " << acertos << "/" << numPerguntasJogo << endl;
+        cout << "Pontuacao Final: " << jogador.pontuacao << " pontos" << endl;
+        
+        double percentual = (double)acertos / numPerguntasJogo * 100;
+        cout << "Aproveitamento: " << percentual << "%" << endl;
+        
+        // Classificação
+        if(percentual >= 80) cout << "Excelente!" << endl;
+        else if(percentual >= 60) cout << "Bom trabalho!" << endl;
+        else if(percentual >= 40) cout << "Continue estudando!" << endl;
+        else cout << "Nao desista, pratique mais!" << endl;
+        
+        // Inserir na árvore de ranking
+        cout << "\nInserindo no ranking..." << endl;
+        arvoreRanking->inserir(jogador);
+        
+        cout << "\nPressione ENTER para voltar ao menu...";
+        cin.ignore();
+        cin.get();
+    }
+    
+    void demonstrarOrdenacao(Jogador jogadores[], int tamanho) {
+        if(tamanho <= 1) return;
+        
+        cout << "\nDEMONSTRACAO DO MERGE SORT - ORDENACAO DO RANKING" << endl;
+        cout << string(60, '-') << endl;
+        
+        cout << "Estado inicial:" << endl;
+        for(int i = 0; i < tamanho; i++) {
+            cout << jogadores[i].nome << "(" << jogadores[i].pontuacao << ") ";
+        }
+        cout << endl << endl;
+        
+        mergeSort(jogadores, 0, tamanho - 1);
+        
+        cout << "\nOrdenacao concluida!" << endl;
+        cout << "Estado final (ordem decrescente de pontuacao):" << endl;
+        for(int i = 0; i < tamanho; i++) {
+            cout << jogadores[i].nome << "(" << jogadores[i].pontuacao << ") ";
+        }
+        cout << endl;
+    }
+    
+    void exibirRanking() {
+        cout << "\nRANKING DOS JOGADORES" << endl;
+        
+        if(arvoreRanking->vazia()) {
+            cout << "Nenhum jogador no ranking ainda. Jogue para aparecer aqui!" << endl;
+            return;
+        }
+        
+        const int MAX_JOGADORES = 100;
+        Jogador ranking[MAX_JOGADORES];
+        int tamanho = arvoreRanking->obterRankingDecrescente(ranking, MAX_JOGADORES);
+        
+        // Demonstrar algoritmo de ordenação
+        cout << "\nDeseja ver a demonstracao do algoritmo de ordenacao? (s/n): ";
+        char opcao;
         cin >> opcao;
-        
-        switch (opcao) {
-            case 1:
-                jogarQuiz();
-                break;
-            case 2:
-                exibirRanking();
-                break;
-            case 3:
-                cout << "\n🌳 VISUALIZACAO DA ARVORE BST:" << endl;
-                arvoreRanking->exibirArvore();
-                arvoreRanking->exibirEstatisticas();
-                cout << "\nPressione ENTER para continuar...";
-                cin.ignore();
-                cin.get();
-                break;
-            case 4:
-                sobreOJogo();
-                cout << "\nPressione ENTER para continuar...";
-                cin.ignore();
-                cin.get();
-                break;
-            case 5:
-                cout << "\n👋 Obrigado por jogar! Continue estudando estruturas de dados!" << endl;
-                break;
-            default:
-                cout << "❌ Opção inválida! Tente novamente." << endl;
+        if(opcao == 's' || opcao == 'S') {
+            // Criar cópia e embaralhar para demonstrar ordenação
+            Jogador copia[MAX_JOGADORES];
+            for(int i = 0; i < tamanho; i++) {
+                copia[i] = ranking[i];
+            }
+            
+            // Embaralhar copia
+            for(int i = 0; i < tamanho; i++) {
+                int j = i + (rand() % (tamanho - i));
+                Jogador temp = copia[i];
+                copia[i] = copia[j];
+                copia[j] = temp;
+            }
+            
+            demonstrarOrdenacao(copia, tamanho);
         }
         
-    } while (opcao != 5);
-}
+        cout << "\n" << string(50, '=') << endl;
+        cout << "RANKING FINAL" << endl;
+        cout << string(50, '=') << endl;
+        
+        for(int i = 0; i < tamanho; i++) {
+            string medalha = "";
+            if(i == 0) medalha = "[1]";
+            else if(i == 1) medalha = "[2]";
+            else if(i == 2) medalha = "[3]";
+            else medalha = "   ";
+            
+            cout << medalha << " " << (i + 1) << "o lugar: " 
+                 << ranking[i].nome << " - " << ranking[i].pontuacao << " pontos" << endl;
+        }
+        
+        arvoreRanking->exibirEstatisticas();
+    }
+    
+    void sobreOJogo() {
+        cout << "\nSOBRE O QUIZ - ESTRUTURAS DE DADOS" << endl;
+        cout << string(50, '=') << endl;
+        cout << "Objetivo: Aprender e testar conhecimentos sobre estruturas de dados" << endl;
+        cout << "Disciplina: Estruturas de Dados I - UFPA" << endl;
+        cout << "\nESTRUTURAS DE DADOS UTILIZADAS:" << endl;
+        cout << "• Arvore BST: Armazenamento do ranking de jogadores" << endl;
+        cout << "• Fila (Array): Sequencia de perguntas do quiz" << endl;
+        cout << "• Pilha (Array): Historico de perguntas respondidas" << endl;
+        cout << "• Array: Banco de perguntas e alternativas" << endl;
+        cout << "\nALGORITMOS IMPLEMENTADOS:" << endl;
+        cout << "• Merge Sort: Ordenacao do ranking (complexidade O(n log n))" << endl;
+        cout << "• Busca em BST: Organizacao eficiente dos jogadores" << endl;
+        cout << "• Embaralhamento: Randomizacao das perguntas" << endl;
+        cout << "\nFUNCIONALIDADES:" << endl;
+        cout << "• Quiz interativo com perguntas de multipla escolha" << endl;
+        cout << "• Sistema de pontuacao baseado na dificuldade" << endl;
+        cout << "• Ranking persistente usando arvore binaria" << endl;
+        cout << "• Visualizacao do processo de ordenacao" << endl;
+        cout << "• Interface amigavel no terminal" << endl;
+    }
+    
+    void executar() {
+        int opcao;
+        
+        cout << "Inicializando Quiz de Estruturas de Dados..." << endl;
+        
+        do {
+            exibirMenu();
+            cin >> opcao;
+            
+            switch(opcao) {
+                case 1:
+                    jogarQuiz();
+                    break;
+                case 2:
+                    exibirRanking();
+                    break;
+                case 3:
+                    cout << "\nVISUALIZACAO DA ARVORE BST:" << endl;
+                    arvoreRanking->exibirArvore();
+                    arvoreRanking->exibirEstatisticas();
+                    cout << "\nPressione ENTER para continuar...";
+                    cin.ignore();
+                    cin.get();
+                    break;
+                case 4:
+                    sobreOJogo();
+                    cout << "\nPressione ENTER para continuar...";
+                    cin.ignore();
+                    cin.get();
+                    break;
+                case 5:
+                    cout << "\nObrigado por jogar! Continue estudando estruturas de dados!" << endl;
+                    break;
+                default:
+                    cout << "Opcao invalida! Tente novamente." << endl;
+            }
+            
+        } while(opcao != 5);
+    }
+};
 
 // Função main
 int main() {

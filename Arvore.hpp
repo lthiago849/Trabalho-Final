@@ -3,10 +3,9 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 using namespace std;
 
-// Estrutura do Jogador (mesmo do main.cpp)
+// Estrutura do Jogador
 struct Jogador {
     string nome;
     int pontuacao;
@@ -43,7 +42,7 @@ private:
     
     // Métodos auxiliares privados
     NoArvore* inserirRecursivo(NoArvore* no, Jogador jogador);
-    void percorrerInOrdemRecursivo(NoArvore* no, vector<Jogador>& lista);
+    void percorrerInOrdemRecursivo(NoArvore* no, Jogador lista[], int& indice, int maxSize);
     void destruirArvore(NoArvore* no);
     void exibirArvoreRecursivo(NoArvore* no, int nivel, string prefixo);
     int contarNos(NoArvore* no);
@@ -55,8 +54,8 @@ public:
     
     // Operações principais
     void inserir(Jogador jogador);
-    vector<Jogador> obterRankingDecrescente();
-    vector<Jogador> obterRankingCrescente();
+    int obterRankingDecrescente(Jogador lista[], int maxSize);
+    int obterRankingCrescente(Jogador lista[], int maxSize);
     void exibirArvore();
     bool vazia();
     int tamanho();

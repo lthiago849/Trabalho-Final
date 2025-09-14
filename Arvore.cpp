@@ -1,6 +1,4 @@
 #include "Arvore.hpp"
-#include <algorithm>
-#include <iomanip>
 
 // Construtor
 ArvoreBST::ArvoreBST() : raiz(nullptr) {}
@@ -45,25 +43,34 @@ NoArvore* ArvoreBST::inserirRecursivo(NoArvore* no, Jogador jogador) {
 }
 
 // Obter ranking em ordem crescente (percurso in-ordem)
-vector<Jogador> ArvoreBST::obterRankingCrescente() {
-    vector<Jogador> ranking;
-    percorrerInOrdemRecursivo(raiz, ranking);
-    return ranking;
+int ArvoreBST::obterRankingCrescente(Jogador lista[], int maxSize) {
+    int indice = 0;
+    percorrerInOrdemRecursivo(raiz, lista, indice, maxSize);
+    return indice;
 }
 
 // Obter ranking em ordem decrescente 
-vector<Jogador> ArvoreBST::obterRankingDecrescente() {
-    vector<Jogador> ranking = obterRankingCrescente();
-    reverse(ranking.begin(), ranking.end());
-    return ranking;
+int ArvoreBST::obterRankingDecrescente(Jogador lista[], int maxSize) {
+    int tamanho = obterRankingCrescente(lista, maxSize);
+    
+    // Inverter a ordem manualmente (sem usar algorithm)
+    for(int i = 0; i < tamanho / 2; i++) {
+        Jogador temp = lista[i];
+        lista[i] = lista[tamanho - 1 - i];
+        lista[tamanho - 1 - i] = temp;
+    }
+    
+    return tamanho;
 }
 
 // Percorrimento in-ordem recursivo
-void ArvoreBST::percorrerInOrdemRecursivo(NoArvore* no, vector<Jogador>& lista) {
-    if (no != nullptr) {
-        percorrerInOrdemRecursivo(no->esquerda, lista);
-        lista.push_back(no->jogador);
-        percorrerInOrdemRecursivo(no->direita, lista);
+void ArvoreBST::percorrerInOrdemRecursivo(NoArvore* no, Jogador lista[], int& indice, int maxSize) {
+    if (no != nullptr && indice < maxSize) {
+        percorrerInOrdemRecursivo(no->esquerda, lista, indice, maxSize);
+        if(indice < maxSize) {
+            lista[indice++] = no->jogador;
+        }
+        percorrerInOrdemRecursivo(no->direita, lista, indice, maxSize);
     }
 }
 
@@ -119,9 +126,12 @@ void ArvoreBST::exibirEstatisticas() {
     cout << "Total de jogadores: " << tamanho() << endl;
     
     if (!vazia()) {
-        vector<Jogador> ranking = obterRankingDecrescente();
+        const int MAX_JOGADORES = 100;
+        Jogador ranking[MAX_JOGADORES];
+        int tam = obterRankingDecrescente(ranking, MAX_JOGADORES);
+        
         cout << "Maior pontuacao: " << ranking[0].pontuacao << " (" << ranking[0].nome << ")" << endl;
-        cout << "Menor pontuacao: " << ranking[ranking.size()-1].pontuacao 
-             << " (" << ranking[ranking.size()-1].nome << ")" << endl;
+        cout << "Menor pontuacao: " << ranking[tam-1].pontuacao 
+             << " (" << ranking[tam-1].nome << ")" << endl;
     }
 }

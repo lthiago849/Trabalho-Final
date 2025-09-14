@@ -10,11 +10,11 @@ void QuizEstruturaDados::inicializarPerguntas() {
     
     // Pergunta 1
     string alt1[] = {"Acesso mais rapido aos elementos", "Tamanho dinamico", "Menor uso de memoria", "Ordenacao automatica"};
-    bancoPerguntas[totalPerguntas++] = Pergunta("Qual a principal vantagem das listas ligadas sobre arrays?", alt1, 1, "Listas", 10, 1);
+    bancoPerguntas[totalPerguntas++] = Pergunta("Qual a principal vantagem das listas encadeadas sobre arrays?", alt1, 1, "Listas", 10, 1);
     
     // Pergunta 2
     string alt2[] = {"Apenas ponteiro para o proximo", "Ponteiros para anterior e proximo", "Apenas dados", "Array de ponteiros"};
-    bancoPerguntas[totalPerguntas++] = Pergunta("Em uma lista duplamente ligada, cada no possui:", alt2, 1, "Listas", 15, 2);
+    bancoPerguntas[totalPerguntas++] = Pergunta("Em uma lista duplamente encadeada, cada no possui:", alt2, 1, "Listas", 15, 2);
     
     // Pergunta 3
     string alt3[] = {"O primeiro inserido (FIFO)", "O ultimo inserido (LIFO)", "O do meio", "Qualquer um"};

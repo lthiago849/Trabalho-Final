@@ -60,64 +60,48 @@ void QuizEstruturaDados::embaralharPerguntas() {
     }
 }
 
-void QuizEstruturaDados::mergeSort(Jogador arr[], int inicio, int fim) {
-    if (inicio < fim) {
-        int meio = inicio + (fim - inicio) / 2;
+// ALGORITMO SELECTION SORT - O(n²)
+void QuizEstruturaDados::selectionSort(Jogador arr[], int tamanho) {
+    cout << "\n=== INICIANDO SELECTION SORT ===" << endl;
+    cout << "Complexidade: O(n^2)" << endl;
+    cout << "Algoritmo: Encontra o maior elemento e coloca na posicao correta" << endl;
+    
+    for(int i = 0; i < tamanho - 1; i++) {
+        int indiceMaior = i; // assume que o primeiro é o maior
         
-        cout << "Dividindo: [" << inicio << ".." << meio << "] e [" << (meio+1) << ".." << fim << "]" << endl;
+        cout << "\nPasso " << (i+1) << ": Procurando o maior elemento de [" << i << ".." << (tamanho-1) << "]" << endl;
+        cout << "Elemento atual na posicao " << i << ": " << arr[i].nome << "(" << arr[i].pontuacao << ")" << endl;
         
-        mergeSort(arr, inicio, meio);
-        mergeSort(arr, meio + 1, fim);
-        
-        merge(arr, inicio, meio, fim);
-    }
-}
-
-void QuizEstruturaDados::merge(Jogador arr[], int inicio, int meio, int fim) {
-    int n1 = meio - inicio + 1;
-    int n2 = fim - meio;
-    
-    Jogador* esquerda = new Jogador[n1];
-    Jogador* direita = new Jogador[n2];
-    
-    for(int i = 0; i < n1; i++)
-        esquerda[i] = arr[inicio + i];
-    for(int j = 0; j < n2; j++)
-        direita[j] = arr[meio + 1 + j];
-    
-    int i = 0, j = 0, k = inicio;
-    
-    while(i < n1 && j < n2) {
-        if(esquerda[i].pontuacao >= direita[j].pontuacao) {
-            arr[k] = esquerda[i];
-            i++;
-        } else {
-            arr[k] = direita[j];
-            j++;
+        // Procura o maior elemento no resto do array
+        for(int j = i + 1; j < tamanho; j++) {
+            if(arr[j].pontuacao > arr[indiceMaior].pontuacao) {
+                cout << "  Novo maior encontrado: " << arr[j].nome << "(" << arr[j].pontuacao << ") na posicao " << j << endl;
+                indiceMaior = j;
+            }
         }
-        k++;
+        
+        // Se encontrou um elemento maior, faz a troca
+        if(indiceMaior != i) {
+            cout << "  Trocando " << arr[i].nome << "(" << arr[i].pontuacao << ")" 
+                 << " com " << arr[indiceMaior].nome << "(" << arr[indiceMaior].pontuacao << ")" << endl;
+            
+            Jogador temp = arr[i];
+            arr[i] = arr[indiceMaior];
+            arr[indiceMaior] = temp;
+        } else {
+            cout << "  Nenhuma troca necessaria - elemento ja esta na posicao correta" << endl;
+        }
+        
+        // Mostra o estado atual do array
+        cout << "  Estado atual: ";
+        for(int k = 0; k < tamanho; k++) {
+            if(k <= i) cout << "[" << arr[k].nome << "(" << arr[k].pontuacao << ")] "; // já ordenado
+            else cout << arr[k].nome << "(" << arr[k].pontuacao << ") "; // ainda não ordenado
+        }
+        cout << endl;
     }
     
-    while(i < n1) {
-        arr[k] = esquerda[i];
-        i++;
-        k++;
-    }
-    
-    while(j < n2) {
-        arr[k] = direita[j];
-        j++;
-        k++;
-    }
-    
-    cout << "Merged [" << inicio << ".." << fim << "]: ";
-    for(int x = inicio; x <= fim; x++) {
-        cout << arr[x].nome << "(" << arr[x].pontuacao << ") ";
-    }
-    cout << endl;
-    
-    delete[] esquerda;
-    delete[] direita;
+    cout << "\n=== SELECTION SORT CONCLUIDO ===" << endl;
 }
 
 void QuizEstruturaDados::adicionarJogadorRanking(Jogador novoJogador) {
@@ -249,19 +233,18 @@ void QuizEstruturaDados::jogarQuiz() {
 void QuizEstruturaDados::demonstrarOrdenacao(Jogador jogadores[], int tamanho) {
     if(tamanho <= 1) return;
     
-    cout << "\nDEMONSTRACAO DO MERGE SORT - ORDENACAO DO RANKING" << endl;
+    cout << "\nDEMONSTRACAO DO SELECTION SORT - ORDENACAO DO RANKING" << endl;
     cout << string(60, '-') << endl;
     
-    cout << "Estado inicial:" << endl;
+    cout << "Estado inicial (desordenado):" << endl;
     for(int i = 0; i < tamanho; i++) {
         cout << jogadores[i].nome << "(" << jogadores[i].pontuacao << ") ";
     }
-    cout << endl << endl;
+    cout << endl;
     
-    mergeSort(jogadores, 0, tamanho - 1);
+    selectionSort(jogadores, tamanho);
     
-    cout << "\nOrdenacao concluida!" << endl;
-    cout << "Estado final (ordem decrescente de pontuacao):" << endl;
+    cout << "\nEstado final (ordem decrescente de pontuacao):" << endl;
     for(int i = 0; i < tamanho; i++) {
         cout << jogadores[i].nome << "(" << jogadores[i].pontuacao << ") ";
     }
@@ -294,7 +277,7 @@ void QuizEstruturaDados::exibirRanking() {
         
         demonstrarOrdenacao(ranking, totalJogadores);
     } else {
-        mergeSort(ranking, 0, totalJogadores - 1);
+        selectionSort(ranking, totalJogadores);
     }
     
     cout << "\n" << string(50, '=') << endl;
@@ -353,13 +336,13 @@ void QuizEstruturaDados::sobreOJogo() {
     cout << "• Fila (Array Circular): Gerencia sequencia de perguntas do quiz" << endl;
     cout << "• Arrays: Armazenamento do banco de perguntas e ranking" << endl;
     cout << "\nALGORITMOS IMPLEMENTADOS:" << endl;
-    cout << "• Merge Sort: Ordenacao do ranking (complexidade O(n log n))" << endl;
+    cout << "• Selection Sort: Ordenacao do ranking (complexidade O(n^2))" << endl;
     cout << "• Embaralhamento Fisher-Yates: Randomizacao das perguntas" << endl;
     cout << "\nFUNCIONALIDADES:" << endl;
     cout << "• Quiz interativo com perguntas de multipla escolha" << endl;
     cout << "• Sistema de pontuacao baseado na dificuldade" << endl;
     cout << "• Demonstracao visual do funcionamento da fila" << endl;
-    cout << "• Visualizacao do processo de ordenacao Merge Sort" << endl;
+    cout << "• Visualizacao detalhada do processo de ordenacao Selection Sort" << endl;
     cout << "• Interface amigavel no terminal" << endl;
     cout << "\nPRINCIPIO FIFO DA FILA:" << endl;
     cout << "As perguntas sao organizadas em fila e apresentadas" << endl;

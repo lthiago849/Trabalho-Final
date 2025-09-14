@@ -21,8 +21,7 @@ private:
     
     void inicializarPerguntas();
     void embaralharPerguntas();
-    void mergeSort(Jogador arr[], int inicio, int fim);
-    void merge(Jogador arr[], int inicio, int meio, int fim);
+    void selectionSort(Jogador arr[], int tamanho);  // Mudou de mergeSort para selectionSort
     void adicionarJogadorRanking(Jogador novoJogador);
     void demonstrarOrdenacao(Jogador jogadores[], int tamanho);
     

@@ -1,5 +1,4 @@
 Executar:
 
-g++ -o quiz main.cpp Arvore.cpp
-
+g++ -o quiz main.cpp fila.cpp quiz.cpp
 ./quiz

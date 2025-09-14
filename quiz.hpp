@@ -12,7 +12,7 @@ using namespace std;
 // Classe principal do Quiz
 class QuizEstruturaDados {
 private:
-    static const int MAX_PERGUNTAS = 15;
+    static const int MAX_PERGUNTAS = 30;
     static const int MAX_JOGADORES = 50;
     Pergunta bancoPerguntas[MAX_PERGUNTAS];
     int totalPerguntas;
